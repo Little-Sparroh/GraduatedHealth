@@ -17,7 +17,7 @@ readme = "README.md"
 outdir = "build"
 
 [[build.copy]]
-source = "bin/Release/net48/GraduatedHealth.dll"
+source = "bin/Release/netstandard2.1/GraduatedHealth.dll"
 target = "BepInEx/plugins/GraduatedHealth.dll"
 
 [[build.copy]]
@@ -30,7 +30,7 @@ target = "LICENSE"
 
 [publish]
 repository = "https://thunderstore.io"
-communities = [ "mycopunk" ]
+communities = ["mycopunk"]
 
 [publish.categories]
-mycopunk = [ "client" ]
+mycopunk = ["client"]

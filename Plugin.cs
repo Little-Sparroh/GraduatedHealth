@@ -1,18 +1,17 @@
 ﻿using System;
-using System.IO;
 using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
 
 [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
 [MycoMod(null, ModFlags.IsClientSide)]
-public class SparrohPlugin : BaseUnityPlugin
+public class GraduatedHealthPlugin : BaseUnityPlugin
 {
     public const string PluginGUID = "sparroh.graduatedhealth";
     public const string PluginName = "GraduatedHealth";
-    public const string PluginVersion = "1.0.0";
+    public const string PluginVersion = "1.0.1";
 
-    internal static new ManualLogSource Logger;
+    internal new static ManualLogSource Logger;
 
     private Harmony harmony;
     private GraduatedHealthMod mod;
@@ -20,6 +19,16 @@ public class SparrohPlugin : BaseUnityPlugin
     private void Awake()
     {
         Logger = base.Logger;
+
+        try
+        {
+            ConfigManager.Initialize(Config, Logger);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Failed to initialize config: {ex.Message}");
+            return;
+        }
 
         try
         {
@@ -31,25 +40,9 @@ public class SparrohPlugin : BaseUnityPlugin
             return;
         }
 
-        var configFile = Config;
         try
         {
-            var watcher = new FileSystemWatcher(Paths.ConfigPath, "sparroh.graduatedhealth.cfg");
-            watcher.Changed += (s, e) =>
-            {
-                try { configFile.Reload(); }
-                catch { /* ignore reload races */ }
-            };
-            watcher.EnableRaisingEvents = true;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogWarning($"Failed to set up config watcher: {ex.Message}");
-        }
-
-        try
-        {
-            mod = new GraduatedHealthMod(configFile, harmony);
+            mod = new GraduatedHealthMod();
         }
         catch (Exception ex)
         {
@@ -58,7 +51,8 @@ public class SparrohPlugin : BaseUnityPlugin
 
         try
         {
-            harmony.PatchAll();
+            harmony.PatchAll(typeof(BossHealthbarPatches));
+            harmony.PatchAll(typeof(HealthbarPatches));
         }
         catch (Exception ex)
         {
@@ -72,6 +66,7 @@ public class SparrohPlugin : BaseUnityPlugin
     {
         try
         {
+            ConfigManager.Tick();
             mod?.Update();
         }
         catch (Exception ex)
@@ -89,6 +84,15 @@ public class SparrohPlugin : BaseUnityPlugin
         catch (Exception ex)
         {
             Logger.LogError($"Error in GraduatedHealth.OnDestroy(): {ex.Message}");
+        }
+
+        try
+        {
+            ConfigManager.Dispose();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"Error disposing config: {ex.Message}");
         }
 
         try
